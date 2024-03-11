@@ -9,6 +9,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Build
+import android.util.Log
+import android.util.SizeF
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -169,6 +171,94 @@ class HomeWidgetPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
             val widgetIds = appWidgetManager.getAppWidgetIds(provider.provider)
             for (widgetId in widgetIds) {
                 val widgetInfo = appWidgetManager.getAppWidgetInfo(widgetId)
+                //AppWidgetProviderInfo  https://developer.android.com/reference/android/appwidget/AppWidgetProviderInfo#autoAdvanceViewId
+
+
+                // Minimum width (in px) which the widget can be resized to. This field has no effect if it is greater than minWidth or if horizontal resizing isn't enabled (see resizeMode).
+                //This field corresponds to the android:minResizeWidth attribute in the AppWidget meta-data file.
+                val minResizeWidth = widgetInfo.minResizeWidth
+                Log.d(TAG, "Widget Info - Min Resize Width: $minResizeWidth")
+
+                // The default width of the widget when added to a host, in px. The widget will get at least this width, and will often be given more, depending on the host.
+                // This field corresponds to the android:minWidth attribute in the AppWidget meta-data file
+                val infoMinWidth = widgetInfo.minWidth
+                Log.d(TAG, "Widget Info - Min Width: $infoMinWidth")
+
+                // The default height of the widget when added to a host, in px. The widget will get at least this height, and will often be given more, depending on the host.
+                //This field corresponds to the android:minHeight attribute in the AppWidget meta-data file.
+                val infoMinHeight = widgetInfo.minHeight
+                Log.d(TAG, "Widget Info - Min Height: $infoMinHeight")
+
+                val infoMaxWidth = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    widgetInfo.maxResizeWidth
+                } else {
+                    TODO("VERSION.SDK_INT < S")
+                }
+                Log.d(TAG, "Widget Info - Max Width: $infoMaxWidth")
+
+                val infoMaxHeight = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    widgetInfo.maxResizeHeight
+                } else {
+                    TODO("VERSION.SDK_INT < S")
+                }
+                Log.d(TAG, "Widget Info - Max Height: $infoMaxHeight")
+
+                val infoCategory = widgetInfo.widgetCategory
+                Log.d(TAG, "Widget Info - Category: $infoCategory")
+
+                val options = appWidgetManager.getAppWidgetOptions(widgetId)
+
+                if (options != null) {
+                    //A bundle extra (int) that contains the lower bound on the current width, in dips, of a widget instance.
+                    val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
+                    Log.d(TAG, "Options - Min Width: $minWidth")
+
+                    //A bundle extra (int) that contains the lower bound on the current height, in dips, of a widget instance.
+                    val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
+                    Log.d(TAG, "Options - Min Height: $minHeight")
+
+                    // A bundle extra (int) that contains the upper bound on the current width, in dips, of a widget instance.
+                    val maxWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH)
+                    Log.d(TAG, "Options - Max Width: $maxWidth")
+
+                    val maxHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT)
+                    Log.d(TAG, "Options - Max Height: $maxHeight")
+
+                    val restoreCompleted = options.getBoolean(AppWidgetManager.OPTION_APPWIDGET_RESTORE_COMPLETED)
+                    Log.d(TAG, "Options - Restore Completed: $restoreCompleted")
+
+                    // Test console output
+
+                    // before resize :
+
+//                    [+2316 ms] D/HomeWidgetPlugin( 7247): Widget Info - Min Resize Width: 468
+//                    [        ] D/HomeWidgetPlugin( 7247): Widget Info - Min Width: 468
+//                    [        ] D/HomeWidgetPlugin( 7247): Widget Info - Min Height: 303
+//                    [        ] D/HomeWidgetPlugin( 7247): Widget Info - Max Width: 0
+//                    [        ] D/HomeWidgetPlugin( 7247): Widget Info - Max Height: 0
+//                    [        ] D/HomeWidgetPlugin( 7247): Widget Info - Category: 1
+//                    [        ] D/HomeWidgetPlugin( 7247): Options - Min Width: 209
+//                    [        ] D/HomeWidgetPlugin( 7247): Options - Min Height: 132
+//                    [        ] D/HomeWidgetPlugin( 7247): Options - Max Width: 376
+//                    [        ] D/HomeWidgetPlugin( 7247): Options - Max Height: 272
+//                    [        ] D/HomeWidgetPlugin( 7247): Options - Restore Completed: false
+//                    [        ] D/HomeWidgetPlugin( 7247): Options - Sizes: [209.81818x272.0, 376.72726x132.36363, 376.72726x132.36363]
+
+                        // after resize :
+
+//                    [+1232 ms] D/HomeWidgetPlugin( 7247): Widget Info - Min Resize Width: 468
+//                    [        ] D/HomeWidgetPlugin( 7247): Widget Info - Min Width: 468
+//                    [        ] D/HomeWidgetPlugin( 7247): Widget Info - Min Height: 303
+//                    [        ] D/HomeWidgetPlugin( 7247): Widget Info - Max Width: 0
+//                    [        ] D/HomeWidgetPlugin( 7247): Widget Info - Max Height: 0
+//                    [        ] D/HomeWidgetPlugin( 7247): Widget Info - Category: 1
+//                    [        ] D/HomeWidgetPlugin( 7247): Options - Min Width: 360
+//                    [        ] D/HomeWidgetPlugin( 7247): Options - Min Height: 280
+//                    [        ] D/HomeWidgetPlugin( 7247): Options - Max Width: 638
+//                    [        ] D/HomeWidgetPlugin( 7247): Options - Max Height: 560
+//                    [        ] D/HomeWidgetPlugin( 7247): Options - Restore Completed: false
+//                    [        ] D/HomeWidgetPlugin( 7247): Options - Sizes: [360.36365x560.0, 638.5455x280.72726, 638.5455x280.72726]
+                }
                 pinnedWidgetInfoList.add(widgetInfoToMap(widgetId, widgetInfo))
             }
         }
@@ -195,6 +285,7 @@ class HomeWidgetPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
     }
 
     companion object {
+        private  const val TAG = "HomeWidgetPlugin"
         private const val PREFERENCES = "HomeWidgetPreferences"
 
         private const val INTERNAL_PREFERENCES = "InternalHomeWidgetPreferences"
